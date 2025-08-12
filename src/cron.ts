@@ -6,6 +6,12 @@ interface DiscordEmbed {
   title: string;
   description: string;
   color: number;
+  thumbnail?: {
+    url: string;
+  };
+  image?: {
+    url: string;
+  };
   fields: Array<{
     name: string;
     value: string;
@@ -13,6 +19,7 @@ interface DiscordEmbed {
   }>;
   footer: {
     text: string;
+    icon_url?: string;
   };
   timestamp: string;
 }
@@ -39,27 +46,92 @@ async function sendMedicationReminder(): Promise<void> {
     minute: '2-digit'
   });
 
+  const dayOfWeek = now.toLocaleDateString('ja-JP', { 
+    timeZone: 'Asia/Tokyo',
+    weekday: 'long' 
+  });
+
+  const hour = now.getHours();
+  const timeOfDay = hour < 12 ? '朝' : hour < 18 ? '昼' : '夜';
+  const greeting = hour < 12 ? 'おはようございます！' : hour < 18 ? 'お疲れ様です！' : 'お疲れ様でした！';
+
+  // 今日の服薬スケジュール
+  const medicationSchedule = [
+    { time: '08:00', type: '朝食後', status: hour >= 8 ? '⏰' : '⌛' },
+    { time: '12:30', type: '昼食後', status: hour >= 12.5 ? '⏰' : '⌛' },
+    { time: '19:00', type: '夕食後', status: hour >= 19 ? '⏰' : '⌛' },
+    { time: '22:00', type: '就寝前', status: hour >= 22 ? '⏰' : '⌛' }
+  ];
+
+  const upcomingMeds = medicationSchedule
+    .filter(med => {
+      const medHour = parseInt(med.time.split(':')[0]);
+      const medMinute = parseInt(med.time.split(':')[1]);
+      const medTime = medHour + medMinute / 60;
+      const currentTime = hour + now.getMinutes() / 60;
+      return medTime > currentTime;
+    })
+    .slice(0, 2);
+
   const message: DiscordMessage = {
     username: "薬リマインダーBot",
     avatar_url: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     embeds: [{
-      title: "💊 薬の服薬確認",
-      description: "今日の薬はちゃんと飲みましたか？",
-      color: 3447003,
+      title: `💊 ${timeOfDay}の服薬確認`,
+      description: `${greeting}\n今日も健康管理を頑張りましょう！`,
+      color: timeOfDay === '朝' ? 0xFFD700 : timeOfDay === '昼' ? 0x87CEEB : 0x9370DB,
+      thumbnail: {
+        url: "https://cdn-icons-png.flaticon.com/512/3004/3004458.png"
+      },
       fields: [
         {
-          name: "日時",
-          value: timeString,
+          name: "📅 日時情報",
+          value: `**${dayOfWeek}** - ${timeString}`,
           inline: true
         },
         {
-          name: "確認事項",
-          value: "✅ 朝の薬\n✅ 昼の薬\n✅ 夜の薬",
+          name: "🕐 現在の時間帯",
+          value: `${timeOfDay}の時間帯です`,
+          inline: true
+        },
+        {
+          name: "📋 今日の服薬スケジュール",
+          value: medicationSchedule
+            .map(med => `${med.status} **${med.time}** - ${med.type}`)
+            .join('\n'),
+          inline: false
+        },
+        ...(upcomingMeds.length > 0 ? [{
+          name: "⏭️ 次回の服薬予定",
+          value: upcomingMeds
+            .map(med => `🔔 **${med.time}** - ${med.type}`)
+            .join('\n'),
+          inline: false
+        }] : []),
+        {
+          name: "✅ 確認事項",
+          value: [
+            "□ 薬を正しい時間に服用しましたか？",
+            "□ 水分と一緒に服用しましたか？", 
+            "□ 副作用や体調変化はありませんか？",
+            "□ 次回分の薬の準備はできていますか？"
+          ].join('\n'),
+          inline: false
+        },
+        {
+          name: "💡 健康チップ",
+          value: [
+            "🥤 薬は十分な水で服用しましょう",
+            "🍽️ 食後の薬は食事から30分以内に",
+            "📝 気になる症状があれば記録しましょう",
+            "💤 規則正しい生活リズムも大切です"
+          ][Math.floor(Math.random() * 4)],
           inline: false
         }
       ],
       footer: {
-        text: "健康管理リマインダー"
+        text: "健康管理リマインダー | 毎日お疲れ様です！",
+        icon_url: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png"
       },
       timestamp: now.toISOString()
     }]
