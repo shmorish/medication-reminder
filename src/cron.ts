@@ -59,12 +59,9 @@ async function sendMedicationReminder(): Promise<void> {
   const timeOfDay = hour < 12 ? '朝' : hour < 18 ? '昼' : '夜';
   const greeting = hour < 12 ? 'おはようございます！' : hour < 18 ? 'お疲れ様です！' : 'お疲れ様でした！';
 
-  // 今日の服薬スケジュール
+  // 夜の服薬スケジュール
   const medicationSchedule = [
-    { time: '08:00', type: '朝食後', status: hour >= 8 ? '⏰' : '⌛' },
-    { time: '12:30', type: '昼食後', status: hour >= 12.5 ? '⏰' : '⌛' },
-    { time: '19:00', type: '夕食後', status: hour >= 19 ? '⏰' : '⌛' },
-    { time: '22:00', type: '就寝前', status: hour >= 22 ? '⏰' : '⌛' }
+    { time: '19:00', type: '夕食後', status: hour >= 19 ? '⏰' : '⌛' }
   ];
 
   const upcomingMeds = medicationSchedule
@@ -99,10 +96,8 @@ async function sendMedicationReminder(): Promise<void> {
           inline: true
         },
         {
-          name: "📋 今日の服薬スケジュール",
-          value: medicationSchedule
-            .map(med => `${med.status} **${med.time}** - ${med.type}`)
-            .join('\n'),
+          name: "💊 夜の服薬",
+          value: `${medicationSchedule[0].status} **${medicationSchedule[0].time}** - ${medicationSchedule[0].type}`,
           inline: false
         },
         ...(upcomingMeds.length > 0 ? [{
@@ -115,10 +110,10 @@ async function sendMedicationReminder(): Promise<void> {
         {
           name: "✅ 確認事項",
           value: [
-            "□ 薬を正しい時間に服用しましたか？",
+            "□ 夜の薬を服用しましたか？",
             "□ 水分と一緒に服用しましたか？", 
             "□ 副作用や体調変化はありませんか？",
-            "□ 次回分の薬の準備はできていますか？"
+            "□ 明日分の薬の準備はできていますか？"
           ].join('\n'),
           inline: false
         },
