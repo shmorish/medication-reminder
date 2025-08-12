@@ -18,6 +18,8 @@ interface DiscordEmbed {
 }
 
 interface DiscordMessage {
+  username?: string;
+  avatar_url?: string;
   embeds: DiscordEmbed[];
 }
 
@@ -38,6 +40,8 @@ async function sendMedicationReminder(): Promise<void> {
   });
 
   const message: DiscordMessage = {
+    username: "薬リマインダーBot",
+    avatar_url: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
     embeds: [{
       title: "💊 薬の服薬確認",
       description: "今日の薬はちゃんと飲みましたか？",
