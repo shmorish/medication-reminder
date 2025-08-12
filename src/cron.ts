@@ -51,7 +51,11 @@ async function sendMedicationReminder(): Promise<void> {
     weekday: 'long' 
   });
 
-  const hour = now.getHours();
+  // 日本時間を取得
+  const japanTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Tokyo"}));
+  const hour = japanTime.getHours();
+  const minute = japanTime.getMinutes();
+  
   const timeOfDay = hour < 12 ? '朝' : hour < 18 ? '昼' : '夜';
   const greeting = hour < 12 ? 'おはようございます！' : hour < 18 ? 'お疲れ様です！' : 'お疲れ様でした！';
 
@@ -68,7 +72,7 @@ async function sendMedicationReminder(): Promise<void> {
       const medHour = parseInt(med.time.split(':')[0]);
       const medMinute = parseInt(med.time.split(':')[1]);
       const medTime = medHour + medMinute / 60;
-      const currentTime = hour + now.getMinutes() / 60;
+      const currentTime = hour + minute / 60;
       return medTime > currentTime;
     })
     .slice(0, 2);
